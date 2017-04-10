@@ -15,6 +15,13 @@ public class AZLyricsScraper {
         System.out.println("What song do you want?");
         Scanner in = new Scanner(System.in);
         String song = in.nextLine();
+        /*
+        * The general syntax for searching in AZLyrics is http://search.azlyrics.com/search.php?q=(something)
+        * So, I just took the part till the '=' and added whatever the user wanted
+        * Now, the links come under a bunch of <td> tags
+        * When I scraped the <td> tags alone, I got some other "album" search results
+        * The number of album search results were exactly 5, so I skipped the first 5 ones
+         */
         Document site = Jsoup.connect("http://search.azlyrics.com/search.php?q="+song).get();
         Elements lyricsTable = site.select("td");
         ArrayList<String> songNames = new ArrayList<>();
@@ -30,7 +37,7 @@ public class AZLyricsScraper {
                 newElm.html("");
             }
             String name = elm.text();
-            if(name.contains("More Song Results")) {
+            if(name.contains("More Song Results")) {//There was one Element that had the More Song Results, so I got rid of it.
                 continue;
             }
             String url = elm.select("a").first().attr("href");
@@ -46,7 +53,12 @@ public class AZLyricsScraper {
         Document lyricPage = Jsoup.connect(urls.get(choice)).get();
         Elements lyricTags = lyricPage.select("div[class='col-xs-12 col-lg-8 text-center']>div");
         String lyrics = new String();
-        for(Element elm : lyricTags){
+        /*
+        * Now, that I've gotten the lyrics, I tried to scrape the tag which contains the lyrics
+        * To remove a few <div> tags that had unnecessary text, I had to make a very very long if statement consisting of all the classes I didn't want
+        * I was forced to make a long if statement because the div tag containing the lyrics did not have a class at all :(
+         */
+        for(Element elm : lyricTags) {
             if(elm.attr("class").equals("div-share noprint")||elm.attr("class").equals("collapse noprint")||elm.attr("class").equals("panel album-panel noprint")||elm.attr("class").equals("noprint")||elm.attr("class").equals("smt")||elm.attr("class").equals("hidden")||elm.attr("class").equals("smt noprint")||elm.attr("class").equals("div-share")||elm.attr("class").equals("lyricsh")||elm.attr("class").equals("ringtone")) {
                 continue;
             }
