@@ -15,6 +15,9 @@ public class AZLyricsScraper {
         System.out.println("What song do you want?");
         Scanner in = new Scanner(System.in);
         String song = in.nextLine();
+        song = song.replaceAll(" ", "+");
+        //System.out.println(song);
+        String initialurl = "http://search.azlyrics.com/search.php?q="+song;
         /*
         * The general syntax for searching in AZLyrics is http://search.azlyrics.com/search.php?q=(something)
         * So, I just took the part till the '=' and added whatever the user wanted
@@ -22,30 +25,29 @@ public class AZLyricsScraper {
         * When I scraped the <td> tags alone, I got some other "album" search results
         * The number of album search results were exactly 5, so I skipped the first 5 ones
          */
-        Document site = Jsoup.connect("http://search.azlyrics.com/search.php?q="+song).get();
-        Elements lyricsTable = site.select("td");
+        Document site = Jsoup.connect(initialurl).get();
+        Elements lyricsTable = site.select("div.panel");
         ArrayList<String> songNames = new ArrayList<>();
         ArrayList<String> urls = new ArrayList<>();
-        int i = 0;
-        for(Element elm : lyricsTable) {
-            if(i<6) {
-                i++;
+        for (Element elm : lyricsTable){
+            if (elm.text().contains("Album")) {
                 continue;
             }
-            Elements newElm = elm.select("small");
-            for(Element elms : newElm) {
-                newElm.html("");
+            //System.out.println(elm);
+            Elements table = elm.select("table > tbody > tr");
+            for (Element elms : table) {
+                if (elms.text().contains("More Song Results")) {
+                    continue;
+                }
+                elms.select("small").html("");
+                songNames.add(elms.text());
+                urls.add(elms.select("a").attr("href"));
+
             }
-            String name = elm.text();
-            if(name.contains("More Song Results")) {//There was one Element that had the More Song Results, so I got rid of it.
-                continue;
-            }
-            String url = elm.select("a").first().attr("href");
-            songNames.add(name);
-            urls.add(url);
         }
         for (int j = 0; j < urls.size(); j++) {
             System.out.println(songNames.get(j));
+            System.out.println(urls.get(j));
         }
         System.out.println("Enter your option");
         int choice = in.nextInt();
@@ -58,7 +60,7 @@ public class AZLyricsScraper {
         * To remove a few <div> tags that had unnecessary text, I had to make a very very long if statement consisting of all the classes I didn't want
         * I was forced to make a long if statement because the div tag containing the lyrics did not have a class at all :(
          */
-        for(Element elm : lyricTags) {
+        for (Element elm : lyricTags) {
             if(elm.attr("class").equals("div-share noprint")||elm.attr("class").equals("collapse noprint")||elm.attr("class").equals("panel album-panel noprint")||elm.attr("class").equals("noprint")||elm.attr("class").equals("smt")||elm.attr("class").equals("hidden")||elm.attr("class").equals("smt noprint")||elm.attr("class").equals("div-share")||elm.attr("class").equals("lyricsh")||elm.attr("class").equals("ringtone")) {
                 continue;
             }
